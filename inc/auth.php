@@ -84,9 +84,15 @@ function auth_setup() {
     }
 
     // if no credentials were given try to use HTTP auth (for SSO)
-    if(!$INPUT->str('u') && empty($_COOKIE[DOKU_COOKIE]) && !empty($_SERVER['PHP_AUTH_USER'])) {
-        $INPUT->set('u', $_SERVER['PHP_AUTH_USER']);
-        $INPUT->set('p', $_SERVER['PHP_AUTH_PW']);
+    if(!$INPUT->str('u') && empty($_COOKIE[DOKU_COOKIE])) {
+        if (!empty($_SERVER['PHP_AUTH_DIGEST'])) {
+            preg_match('/username="(?P<username>.*)"/U', $_SERVER['PHP_AUTH_DIGEST'], $digest);
+            $INPUT->set('u', $digest['username']);
+            $INPUT->set('p', 'null');  // FIXME: password cannot be empty/unset
+        } elseif (!empty($_SERVER['PHP_AUTH_USER'])) {
+            $INPUT->set('u', $_SERVER['PHP_AUTH_USER']);
+            $INPUT->set('p', $_SERVER['PHP_AUTH_PW']);
+        }
         $INPUT->set('http_credentials', true);
     }
 
